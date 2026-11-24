@@ -1,0 +1,95 @@
+{
+  "paths": {
+    "image_root": "C:/dev/biometrics-project/biyometriData/lfw-deepfunneled/lfw-deepfunneled",
+    "model_root": "C:/dev/biometrics-project/.insightface",
+    "lfw_pairs": "C:/dev/biometrics-project/biyometriData/pairs.csv",
+    "index": "work/data_index.csv",
+    "embeddings": "work/embeddings.npz",
+    "metadata": "work/metadata.json",
+    "calibration": "work/calibration.json",
+    "h_histogram": "work/h_score_histogram.csv",
+    "lfw_result": "work/lfw_verification.json",
+    "results": "results"
+  },
+  "dataset": {
+    "source": "Kaggle mirror ashfaqsyed/labelled-faces-in-the-wild; local provenance not independently verified",
+    "edition": "LFW deep-funneled",
+    "expected_images": 13233,
+    "expected_identities": 5749
+  },
+  "split": {
+    "seed": 42,
+    "G": 1000,
+    "P": 2000,
+    "H": 2500
+  },
+  "model": {
+    "name": "buffalo_l",
+    "dimension": 512,
+    "insightface_version": "0.7.3",
+    "providers": [
+      "CPUExecutionProvider"
+    ],
+    "det_size": [
+      640,
+      640
+    ],
+    "det_threshold": 0.5,
+    "face_selection": "highest_detection_score_then_bbox_lexicographic",
+    "preprocessing": "InsightFace 0.7.3 five-landmark norm_crop; 112x112; BGR input; recognition blob RGB; mean/std 127.5"
+  },
+  "calibration": {
+    "seed": 713,
+    "surrogate_galleries": 200,
+    "gallery_size": 1000,
+    "system_fmrs": [
+      0.01,
+      0.001
+    ],
+    "recovery_fmr": 0.0001,
+    "lo_percentile": 0.1,
+    "block_size": 256,
+    "histogram_bins": 1000
+  },
+  "experiment": {
+    "seed": 2026,
+    "query_budget": 1000,
+    "repetitions": 20,
+    "methods": [
+      "hill"
+    ],
+    "granularities": [
+      "float"
+    ],
+    "targets": [
+      0.01
+    ]
+  },
+  "hill": {
+    "step": 0.1,
+    "restart_after": 100,
+    "ties": "keep_incumbent"
+  },
+  "simplex": {
+    "vertices": 20,
+    "reflection": 1.0,
+    "expansion": 2.0,
+    "contraction": 0.5,
+    "shrink": 0.5,
+    "restart_after": 15,
+    "ties": "stable_keep_incumbent"
+  },
+  "genetic": {
+    "population": 20,
+    "elite": 2,
+    "parent_fraction": 0.5,
+    "mutation_sigma": 0.02,
+    "restart_after": 20,
+    "ties": "stable_keep_earlier"
+  },
+  "lfw": {
+    "folds": 10,
+    "pairs_per_fold": 600,
+    "distance_step": 0.01
+  }
+}
