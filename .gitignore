@@ -2,3 +2,5 @@
 __pycache__/
 work/
 results/
+data/processed/
+models/

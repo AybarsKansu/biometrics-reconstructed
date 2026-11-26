@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from common import load_config, load_data, write_json
+from src.common import load_config, load_data, write_json
 
 
 def image_id(name, number):

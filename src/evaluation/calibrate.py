@@ -3,7 +3,7 @@ from collections import Counter, defaultdict
 
 import numpy as np
 
-from common import (load_config, load_data, select,
+from src.common import (load_config, load_data, select,
                     write_csv, write_json)
 
 

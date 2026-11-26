@@ -6,10 +6,10 @@ from pathlib import Path
 
 import numpy as np
 
-from attacks import candidates
-from common import (read_json, load_config,
+from src.attacks.attacks import candidates
+from src.common import (read_json, load_config,
                     load_data, select, write_json)
-from comparator import run_loop
+from src.verifier.comparator import run_loop
 
 
 def experiment_data(vectors, rows):

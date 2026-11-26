@@ -3,13 +3,13 @@
     "image_root": "C:/dev/biometrics-project/biyometriData/lfw-deepfunneled/lfw-deepfunneled",
     "model_root": "C:/dev/biometrics-project/.insightface",
     "lfw_pairs": "C:/dev/biometrics-project/biyometriData/pairs.csv",
-    "index": "work/data_index.csv",
-    "embeddings": "work/embeddings.npz",
-    "metadata": "work/metadata.json",
-    "calibration": "work/calibration.json",
-    "h_histogram": "work/h_score_histogram.csv",
-    "lfw_result": "work/lfw_verification.json",
-    "results": "results"
+    "index": "../data/processed/data_index.csv",
+    "embeddings": "../data/processed/embeddings.npz",
+    "metadata": "../data/processed/metadata.json",
+    "calibration": "../data/processed/calibration.json",
+    "h_histogram": "../data/processed/h_score_histogram.csv",
+    "lfw_result": "../data/processed/lfw_verification.json",
+    "results": "../results"
   },
   "dataset": {
     "source": "Kaggle mirror ashfaqsyed/labelled-faces-in-the-wild; local provenance not independently verified",
@@ -91,5 +91,15 @@
     "folds": 10,
     "pairs_per_fold": 600,
     "distance_step": 0.01
+  },
+  "evaluation": {
+    "gallery_sizes": [
+      100,
+      500,
+      1000
+    ],
+    "seed": 371,
+    "bootstrap_repetitions": 2000,
+    "block_size": 128
   }
 }

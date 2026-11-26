@@ -5,7 +5,7 @@ hidden cosine score, recovery result, or held-out embedding.
 """
 import numpy as np
 
-from common import normalize
+from src.common import normalize
 
 
 def zero_effort(pool, order):

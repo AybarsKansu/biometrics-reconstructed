@@ -17,7 +17,9 @@ def write_json(path, value):
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n", encoding="utf-8")
 
 
-def load_config(path="config.json"):
+def load_config(path=None):
+    if path is None:
+        path = Path(__file__).resolve().parents[1] / "configs" / "config.json"
     path = Path(path).resolve()
     config = read_json(path)
     for name, value in config["paths"].items():

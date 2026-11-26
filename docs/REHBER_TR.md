@@ -4,7 +4,9 @@ Proje, yüz fotoğraflarını 512 sayılık vektörlere çevirip bu vektörlerle
 
 Kişiler üç gruba ayrılıyor: **G**, sisteme kayıtlı 1.000 hedef kişi; **P**, saldırıların başlangıç vektörlerini aldığı 2.000 kişi; **H**, kabul eşiklerini belirlediğimiz 2.500 kişi. Aynı kişi iki grupta bulunmuyor. G'de her kişinin bir fotoğrafının vektörü sisteme kaydediliyor; buna **enrollment** deniyor. Diğer fotoğrafları **held-out** olarak ayrılıyor ve yalnızca sonuç değerlendirmesinde kullanılıyor.
 
-Akış `prepare.py → calibrate.py → experiment.py → report.py` şeklinde. Aşağıda sekiz Python dosyasındaki 40 fonksiyon, bu akıştaki yerleriyle anlatılıyor.
+Akış `prepare.py → calibrate.py → experiment.py → report.py` şeklinde. Aşağıda özgün deney akışındaki fonksiyonlar, bu akıştaki yerleriyle anlatılıyor.
+
+Güncel klasör düzeni ve galeri değerlendirmesi [README](../README.md) içinde anlatılıyor. Aşağıdaki işlev açıklamaları ilk deney tasarımına aittir.
 
 ## common.py
 
@@ -20,7 +22,7 @@ Bir sözlüğü veya listeyi JSON dosyasına yazıyor. Kullanılan ayarları, he
 
 ### load_config
 
-`config.json` dosyasını okuyup içindeki yolları tam dosya yollarına çeviriyor. Böylece `work/embeddings.npz` gibi bir yol, config'in bulunduğu proje klasörüne göre yorumlanıyor. Ardından modelin buffalo_l ve vektör boyutunun 512 olduğunu kontrol edip config sözlüğünü döndürüyor. Deney seçimi ve parametreler bu sözlükten okunuyor; komuta argüman vermiyoruz.
+`configs/config.json` dosyasını okuyup içindeki yolları tam dosya yollarına çeviriyor. Böylece `data/processed/embeddings.npz` gibi bir yol, config dosyasının klasörüne göre yorumlanıyor. Ardından modelin buffalo_l ve vektör boyutunun 512 olduğunu kontrol edip config sözlüğünü döndürüyor. Deney seçimi ve parametreler bu sözlükten okunuyor; komuta argüman vermiyoruz.
 
 ### read_index
 
@@ -52,7 +54,7 @@ Kişilerin yanlışlıkla iki farklı gruba dağıtılmadığını ve G/P/H kiş
 
 ## prepare.py
 
-Gerçek fotoğrafların bulunduğu klasörle başlayıp kullanılabilir embedding deposunu oluşturuyor. `python prepare.py` çalıştırıldığında indeks yoksa hazırlanıyor, sonra görüntülerden vektörler çıkarılıyor. İndeks varsa mevcut indeks kullanılıyor.
+Gerçek fotoğrafların bulunduğu klasörle başlayıp kullanılabilir embedding deposunu oluşturuyor. `python -m scripts.prepare` çalıştırıldığında indeks yoksa hazırlanıyor, sonra görüntülerden vektörler çıkarılıyor. İndeks varsa mevcut indeks kullanılıyor.
 
 ### assign_initial_groups
 
@@ -76,7 +78,7 @@ Yerel buffalo_l modelini açıp indeksteki okunabilir fotoğrafları tek tek iş
 
 ### main
 
-Hazırlık scriptinin başlangıç noktası. Config'i okuyup indeks dosyasının varlığına bakıyor; yoksa `build_index` ile oluşturuyor. Sonra `extract` çağırarak embedding üretimini başlatıyor. Böylece indeksleme ve vektör çıkarma için ayrı komut seçenekleriyle uğraşmadan `python prepare.py` çalıştırabiliyoruz.
+Hazırlık scriptinin başlangıç noktası. Config'i okuyup indeks dosyasının varlığına bakıyor; yoksa `build_index` ile oluşturuyor. Sonra `extract` çağırarak embedding üretimini başlatıyor. Böylece indeksleme ve vektör çıkarma için ayrı komut seçenekleriyle uğraşmadan `python -m scripts.prepare` çalıştırabiliyoruz.
 
 ## comparator.py
 
@@ -116,7 +118,7 @@ Recovery sırasında bir adayın tek bir kişinin diğer fotoğraflarına benzey
 
 ### calibrate
 
-Kalibrasyonun bütün adımlarını bir araya getiriyor. Depodan H vektörlerini seçiyor, `system_scores` ile sistem skorlarını ve `pairwise_scores` ile recovery eşiğini hesaplıyor. Sistem skorlarının 0,1'inci yüzdeliğini kuantizerin alt sınırı olarak alıyor; iki hedef FMR için de kabul eşiğini çıkarıyor. Eşikleri ve gerçekleşen oranları `calibration.json`, dağılım sayımlarını `h_score_histogram.csv` içine yazıyor. `python calibrate.py` bu fonksiyonu config ile çağırıyor.
+Kalibrasyonun bütün adımlarını bir araya getiriyor. Depodan H vektörlerini seçiyor, `system_scores` ile sistem skorlarını ve `pairwise_scores` ile recovery eşiğini hesaplıyor. Sistem skorlarının 0,1'inci yüzdeliğini kuantizerin alt sınırı olarak alıyor; iki hedef FMR için de kabul eşiğini çıkarıyor. Eşikleri ve gerçekleşen oranları `calibration.json`, dağılım sayımlarını `h_score_histogram.csv` içine yazıyor. `python -m src.evaluation.calibrate` bu fonksiyonu config ile çağırıyor.
 
 ## attacks.py
 
@@ -164,7 +166,7 @@ Embedding'leri ve H'den hesaplanan eşikleri okuyup yeni bir sonuç klasörü a�
 
 ### main
 
-Config'in `experiment` bölümündeki `methods`, `granularities` ve `targets` listelerini okuyup `run` fonksiyonuna veriyor. Örneğin yalnız hill ve float seçiliyse sadece o koşulları çalıştırıyor. Tam karşılaştırma için bu listelere diğer yöntemler, hassasiyetler ve iki hedef FMR ekleniyor. Bütçe ve tekrar sayısı da config'te duruyor; komut her iki durumda da `python experiment.py`.
+Config'in `experiment` bölümündeki `methods`, `granularities` ve `targets` listelerini okuyup `run` fonksiyonuna veriyor. Örneğin yalnız hill ve float seçiliyse sadece o koşulları çalıştırıyor. Tam karşılaştırma için bu listelere diğer yöntemler, hassasiyetler ve iki hedef FMR ekleniyor. Bütçe ve tekrar sayısı da config'te duruyor; komut her iki durumda da `python -m scripts.experiment`.
 
 ## lfw_check.py
 
@@ -184,7 +186,7 @@ Desteklenen TXT veya CSV çift dosyasını okuyup her kaydı iki görüntü kiml
 
 ### check
 
-Embedding deposunu ve çift listesini okuyup her çiftin vektörlerini buluyor. Gerekli bir fotoğrafın embedding'i yoksa o çifti atarak daha kolay bir değerlendirme yapmak yerine eksikliği kaydedip doğruluk sonucunu boş bırakıyor. Hepsi varsa çiftlerin kosinüslerini hesaplayıp `cross_validate` çağırıyor. Fold sonuçlarını, ortalama doğruluğu ve fold'lar arasındaki standart sapmayı JSON dosyasına yazıyor. `python lfw_check.py` çalıştırıldığında bu fonksiyon çağrılıyor.
+Embedding deposunu ve çift listesini okuyup her çiftin vektörlerini buluyor. Gerekli bir fotoğrafın embedding'i yoksa o çifti atarak daha kolay bir değerlendirme yapmak yerine eksikliği kaydedip doğruluk sonucunu boş bırakıyor. Hepsi varsa çiftlerin kosinüslerini hesaplayıp `cross_validate` çağırıyor. Fold sonuçlarını, ortalama doğruluğu ve fold'lar arasındaki standart sapmayı JSON dosyasına yazıyor. `python -m src.evaluation.lfw_check` çalıştırıldığında bu fonksiyon çağrılıyor.
 
 ## report.py
 
@@ -204,22 +206,22 @@ Kalibrasyonun kaydettiği aynı-kişi ve farklı-kişi histogramlarını okuyup 
 
 ## Ayarlar ve çıktı dosyaları
 
-Yollar, kişi sayıları, seed'ler, yöntem parametreleri, bütçe ve tekrar sayısı `config.json` içinde. Kurulum bağımlılıkları `requirements.txt` dosyasında. `agent.md` ve `reconstruct.md` tasarım kararlarını, `VALIDATION.md` mevcut veri ve çalıştırma durumunu anlatıyor.
+Yollar, kişi sayıları, seed'ler, yöntem parametreleri, bütçe ve tekrar sayısı `configs/config.json` içinde. Kurulum bağımlılıkları `requirements.txt` dosyasında. `agent.md` ve `reconstruct.md` tasarım kararlarını, `VALIDATION.md` mevcut veri ve çalıştırma durumunu anlatıyor.
 
-`work/data_index.csv` her görüntünün kişi, yol, grup ve rol bilgisini tutuyor. `work/embeddings.npz` vektörleri ve görüntü kimliklerini birlikte saklıyor. `metadata.json` model bilgileri ve hazırlık sayılarını, `calibration.json` eşikleri, `h_score_histogram.csv` dağılım sayımlarını içeriyor. Bir görüntünün okunabilir olması embedding'inin de çıktığı anlamına gelmiyor; bu nedenle indekste görüntü geçerliliği ve embedding durumu ayrı alanlar.
+`data/processed/data_index.csv` her görüntünün kişi, yol, grup ve rol bilgisini tutuyor. `data/processed/embeddings.npz` vektörleri ve görüntü kimliklerini birlikte saklıyor. `metadata.json` model bilgileri ve hazırlık sayılarını, `calibration.json` eşikleri, `h_score_histogram.csv` dağılım sayımlarını içeriyor. Bir görüntünün okunabilir olması embedding'inin de çıktığı anlamına gelmiyor; bu nedenle indekste görüntü geçerliliği ve embedding durumu ayrı alanlar.
 
 Her deneyin `results/pilot-.../` klasöründeki `resolved.json` kullanılan ayarlar, `private_records.jsonl` tek tek koşular içindir. Özet tablolar ve grafikler bunlardan üretiliyor. Özel kayıtta eşleşen kişi ve held-out medyanı bulunabiliyor; bunlar raporlama bilgisi, algoritmanın sorgu cevabı değil.
 
 ## Komut sırası
 
 ```powershell
-python prepare.py
-python calibrate.py
-python experiment.py
-python report.py
+python -m scripts.prepare
+python -m src.evaluation.calibrate
+python -m scripts.experiment
+python -m scripts.report
 ```
 
-Embedding üretiminden sonra standart model doğruluğu için ayrıca `python lfw_check.py` çalıştırılabilir. Hazır embedding deposu varsa tekrar hazırlık yapmak gerekmez. Veriyi veya kalibrasyon ayarlarını değiştirirsen eşikleri `calibrate.py` ile yeniden hesaplamalısın.
+Embedding üretiminden sonra standart model doğruluğu için ayrıca `python -m src.evaluation.lfw_check` çalıştırılabilir. Hazır embedding deposu varsa tekrar hazırlık yapmak gerekmez. Veriyi veya kalibrasyon ayarlarını değiştirirsen eşikleri `calibrate.py` ile yeniden hesaplamalısın.
 
 Varsayılan deney tek hill/float/%1 ayarı, 20 tekrar ve koşu başına 1.000 sorgu. Tam 18 ayar için config'te yöntem listesi `["hill", "simplex", "genetic"]`, hassasiyet listesi `["float", "8", "4"]`, hedef listesi `[0.01, 0.001]` yapılır. Bu hedefler doğrudan kosinüs sayıları değil, H'den eşik seçmekte kullanılan yanlış kabul oranlarıdır.
 

@@ -1,7 +1,7 @@
 """Exact NumPy comparison, decision-preserving feedback, and the private loop."""
 import numpy as np
 
-from common import normalize
+from src.common import normalize
 
 
 def compare(vector, gallery):

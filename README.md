@@ -4,13 +4,15 @@ Bu ders projesinde yüz fotoğraflarını buffalo_l modeliyle 512 sayılık vekt
 
 ## Kurulum
 
+Kaynak kodu `src/data`, `src/embedding`, `src/verifier`, `src/evaluation` ve `src/attacks` altında. Çalıştırma betikleri `scripts/`, ayarlar `configs/`, yöntem belgeleri `docs/`, testler `tests/` içinde. Aşağıdaki komutları depo kökünden çalıştırın.
+
 Python 3.11 veya 3.12 ortamında bağımlılıkları kur:
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-InsightFace 0.7.3 Windows'ta C++ derleme araçları gerektirebilir. Config'teki model kökünün altında `models/buffalo_l/w600k_r50.onnx` ve `models/buffalo_l/det_10g.onnx` dosyaları bulunmalı. Kod model indirmiyor. Bütün ayarlar `config.json` içinde; komutlara argüman vermiyoruz.
+InsightFace 0.7.3 Windows'ta C++ derleme araçları gerektirebilir. Config'teki model kökünün altında `models/buffalo_l/w600k_r50.onnx` ve `models/buffalo_l/det_10g.onnx` dosyaları bulunmalı. Kod model indirmiyor. Bütün ayarlar `configs/config.json` içinde; komutlara argüman vermiyoruz.
 
 | Girdi | Config'teki mevcut yol |
 |---|---|
@@ -21,10 +23,10 @@ InsightFace 0.7.3 Windows'ta C++ derleme araçları gerektirebilir. Config'teki 
 ## Çalıştırma
 
 ```powershell
-python prepare.py
-python calibrate.py
-python experiment.py
-python report.py
+python -m scripts.prepare
+python -m src.evaluation.calibrate
+python -m scripts.experiment
+python -m scripts.report
 ```
 
 `prepare.py` görüntü indeksini oluşturup embedding'leri çıkarıyor. İndeks varsa onu kullanıyor; hazır embedding deposunun üzerine yazmıyor. G/P/H kişi sayıları 1.000/2.000/2.500. G'deki her kişinin bir vektörü kayıt olarak seçiliyor, diğerleri recovery değerlendirmesine ayrılıyor. Yüz bulunamayan görüntüler işaretleniyor; gerektiğinde yeterli vektörü kalmayan G kişisi uygun bir P kişisiyle değiştiriliyor. Baştan hazırlık yapmak istersen config'teki work çıktı yollarını yeni bir klasöre yönlendir.
@@ -33,9 +35,29 @@ python report.py
 
 `experiment.py` seçilen yöntemleri P'deki vektörlerden başlatıyor. Her aday, G'nin kayıtlarıyla karşılaştırılıyor; algoritmaya yalnız seçili hassasiyetteki cevap dönüyor. İlk kabulde koşu bitiyor ve aynı vektör için recovery sonucu kaydediliyor. Başlangıç adayları, tekrar sorguları ve yeniden başlamalar bütçeye dahil. Kabul bulamayan koşular da sonuç dosyasında kalıyor.
 
-`report.py` en son deneyin kabul/recovery oranlarını, sorgu sayılarını ve başarı eğrilerini üretiyor. H histogramı varsa onun dağılım, ROC ve DET grafiklerini de çiziyor. Modelin standart LFW doğruluğunu saldırılardan ayrı ölçmek için embedding üretiminden sonra `python lfw_check.py` çalıştırılabilir; bu 6.000 çift ve on bölüm üzerinden yapılan bir değerlendirme.
+`report.py` en son deneyin kabul/recovery oranlarını, sorgu sayılarını ve başarı eğrilerini üretiyor. H histogramı varsa onun dağılım, ROC ve DET grafiklerini de çiziyor. Modelin standart LFW doğruluğunu saldırılardan ayrı ölçmek için embedding üretiminden sonra `python -m src.evaluation.lfw_check` çalıştırılabilir; bu 6.000 çift ve on bölüm üzerinden yapılan bir değerlendirme.
 
 ## Deney ayarları
+
+Embedding deposu ve H kalibrasyonu hazır olduğunda fotoğraflarla galeri değerlendirmesini çalıştırın:
+
+```powershell
+python -m scripts.evaluate
+```
+
+`evaluation.gallery_sizes` varsayılan olarak 100, 500 ve 1.000 kişidir. Aynı seed ile iç içe galeriler kurulur. Her boyutta en küçük galerinin kayıt dışında tutulan fotoğrafları ve D grubunun kullanılabilir fotoğrafları sorgulanır. D, ilk ayrımdan artan 249 kişidir. Eşikler H kalibrasyonundan gelir ve bütün boyutlarda sabittir. Tablodaki hedef FMR, kalibrasyon boyutuna aittir.
+
+| `results/verification/` çıktısı | Nasıl okunur? |
+|---|---|
+| `thresholds.csv` | Her eşik ve galeri boyutu için D'de yanlış kabul, G'de ret ve G'de yanlış kimliğe kabul. Her olayın sayısı, paydası ve oranı yer alır. |
+| `gallery_sizes.csv` | Kayıtlı kişilerin fotoğraflarında eşikten bağımsız ilk sırada doğru kimlik oranı ve toplu skorlama sırasında fotoğraf başına geçen süre. Süre embedding çıkarımını içermez. |
+| `errors.csv` | En büyük galeride, her eşik için hatalı fotoğrafların göreli yolu, skoru, boyutu ve ortalama parlaklığı. Poz ve görünür kalite sorunları bu örneklerden incelenebilir. |
+| `brightness.csv` | En büyük galeride her parlaklık grubunun hata sayısı ve toplam fotoğraf sayısı. Parlaklık, gri görüntünün 0–255 arası ortalamasıdır. Sınırlar 85 ve 170'tir. Fotoğraf okunamazsa ölçüm `unavailable` olur. |
+| `protocol.json` | Galeri boyutları, seed, değerlendirmeye giren kişi ve sorgu sayıları. |
+
+Tablodaki %95 aralıklar sabit galeri ve sabit eşik için sorgu kişilerini tekrar örnekleyerek hesaplanır. Aynı kişinin görüntüleri birlikte seçilir. Kişi sayısı yetersizse veya tekrar örnekleme oranı değiştiremiyorsa aralık boş kalır. Parlaklık tablosu gözlenen ilişkileri özetler. Hataların nedenini belirlemek için fotoğrafları ayrıca inceleyin.
+
+Değerlendirme testleri için `python -m unittest discover -s tests` çalıştırın.
 
 Varsayılan seçim hill yöntemi, float cevap ve %1 hedef FMR; koşu başına 1.000 sorgu ve 20 tekrar. Config'in `experiment` bölümü şöyle:
 
@@ -54,9 +76,9 @@ Varsayılan seçim hill yöntemi, float cevap ve %1 hedef FMR; koşu başına 1.
 
 ## Dosyalar ve sonuçlar
 
-İndeks `work/data_index.csv`, vektörler ve görüntü kimlikleri `work/embeddings.npz`, kısa model/veri bilgileri `work/metadata.json` içinde. Eşikler `work/calibration.json`, H dağılım sayımları `work/h_score_histogram.csv` dosyasına yazılıyor. Her deneyin `results/pilot-.../` klasöründe kullanılan ayarlar `resolved.json`, koşular `private_records.jsonl` içinde saklanıyor. CSV özetleri ve PNG grafikler bu kayıtlardan üretiliyor. Recovery hem bütün koşulara hem kabul edilen koşulara göre raporlanıyor; medyan veya p90'a bütçede ulaşılamadıysa bu belirtiliyor.
+İndeks `data/processed/data_index.csv`, vektörler ve görüntü kimlikleri `data/processed/embeddings.npz`, kısa model/veri bilgileri `data/processed/metadata.json` içinde. Eşikler `data/processed/calibration.json`, H dağılım sayımları `data/processed/h_score_histogram.csv` dosyasına yazılıyor. Her deneyin `results/pilot-.../` klasöründe kullanılan ayarlar `resolved.json`, koşular `private_records.jsonl` içinde saklanıyor. CSV özetleri ve PNG grafikler bu kayıtlardan üretiliyor. Recovery hem bütün koşulara hem kabul edilen koşulara göre raporlanıyor; medyan veya p90'a bütçede ulaşılamadıysa bu belirtiliyor.
 
-Fonksiyonların açıklamaları [Türkçe kod rehberinde](REHBER_TR.md). `common.py` ortak dosya ve vektör işlemlerini, `attacks.py` aday üretimini, `comparator.py` karşılaştırma ve sorgu döngüsünü içeriyor. Diğer Python dosyaları yukarıdaki komutlarla çalıştırılan aşamalar.
+Fonksiyonların açıklamaları [Türkçe kod rehberinde](docs/REHBER_TR.md). `common.py` ortak dosya ve vektör işlemlerini, `attacks.py` aday üretimini, `comparator.py` karşılaştırma ve sorgu döngüsünü içeriyor. Diğer Python dosyaları yukarıdaki komutlarla çalıştırılan aşamalar.
 
 ## Mevcut durum
 

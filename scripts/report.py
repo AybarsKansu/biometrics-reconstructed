@@ -10,7 +10,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import load_config, read_json, write_csv
+from src.common import load_config, read_json, write_csv
 
 
 def success_quantile(records, outcome, fraction):
